@@ -2,71 +2,63 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Online Exam · ProctorSense</title>
+  <title>Assessment Environment</title>
   <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
+  
   <header class="top-bar">
-    <div class="logo">ProctorSense</div>
-    <nav class="nav-links">
-      <a href="index.html">Home</a>
-      <a href="exam.html" class="active">Take Exam</a>
-      <a href="dashboard.html">Proctor Dashboard</a>
-    </nav>
+    <div class="logo">
+      <span style="color:var(--neon-cyan)">[ SECURE BROWSER ]</span>
+    </div>
+    <div style="font-family: var(--font-code); color: var(--text-dim);">
+      SESSION_ID: <span id="sessionID" style="color:#fff">WAITING...</span>
+    </div>
   </header>
 
   <main class="container">
-    <section class="page-header">
-      <h1>Online Exam</h1>
-      <p>This page tracks your behaviour for integrity analysis (no camera used).</p>
-    </section>
-
+    
+    <!-- Login / Meta Section -->
     <section class="exam-meta">
-      <label>
-        Candidate ID
-        <input type="text" id="candidateId" placeholder="Enter your roll number" />
-      </label>
-
-      <!-- Timer like CodeTantra -->
-      <span class="exam-status">
-        Time left:
-        <span id="timerDisplay">00:30:00</span>
-      </span>
-
-      <!-- Monitoring status text -->
-      <span class="exam-status" id="examStatus">Monitoring inactive</span>
+      <div id="loginSection" style="display:flex; gap:15px; flex:1;">
+        <input type="text" id="candidateId" placeholder="ENTER CANDIDATE IDENTITY" autocomplete="off" style="width: 250px; text-transform: uppercase;" />
+        <button id="startMonitoringBtn" class="btn primary">AUTHENTICATE & START</button>
+      </div>
+      
+      <div style="display:flex; gap:30px; margin-left:30px;">
+        <div class="status-box">
+          TIME: <span id="timerDisplay" class="timer">00:30:00</span>
+        </div>
+        <div class="status-box">
+          STATUS: <span id="examStatus" style="color:var(--text-dim)">DISCONNECTED</span>
+        </div>
+      </div>
     </section>
 
+    <!-- Question Section -->
     <section class="exam-body">
-      <!-- Question container: ONE question at a time -->
-      <div class="question-card" id="questionContainer">
-        <h2 id="questionTitle">Question</h2>
-        <p id="questionText">Loading questions...</p>
-        <textarea id="answerBox" rows="6" placeholder="Type your answer here..."></textarea>
+      <div class="question-card">
+        <div style="display:flex; justify-content:space-between; margin-bottom:20px; border-bottom:1px solid var(--border-dim); padding-bottom:10px;">
+          <h2 id="questionTitle" style="font-size:1.5rem; margin:0; color:var(--text-bright);">DATA_PACKET_01</h2>
+          <span id="questionIndicator" style="font-family:var(--font-code); color:var(--neon-cyan);">1 / 2</span>
+        </div>
+        
+        <p id="questionText" style="font-size:1.3rem; line-height:1.6; margin-bottom:30px;">
+          Awaiting initialization sequence...
+        </p>
+        
+        <textarea id="answerBox" rows="8" placeholder="> AWAITING INPUT..."></textarea>
       </div>
 
-      <!-- Question navigation like CodeTantra: Prev / Next / status -->
-      <div class="question-nav">
-        <button class="btn secondary" id="prevBtn">Previous</button>
-
-        <span id="questionIndicator">Question 1 of 2</span>
-
-        <button class="btn secondary" id="nextBtn">Next</button>
+      <div class="question-nav" style="display:flex; justify-content:space-between; margin-top:20px;">
+        <button class="btn secondary" id="prevBtn">< PREV</button>
+        <button class="btn primary" id="submitExam" style="background:var(--neon-green); color:black; border-color:var(--neon-green);">SUBMIT ASSESSMENT</button>
+        <button class="btn secondary" id="nextBtn">NEXT ></button>
       </div>
-
-      <!-- Final submit -->
-      <button class="btn primary" id="submitExam">Submit Exam</button>
     </section>
 
-    <section class="debug-panel">
-      <h3>Monitoring Summary (for demo)</h3>
-      <p id="debugInfo">Behaviour metrics will appear here while you interact.</p>
-    </section>
   </main>
-
-  <footer class="footer">
-    <p>© 2025 ProctorSense</p>
-  </footer>
 
   <script src="exam.js"></script>
   <script src="proctor-sdk.js"></script>

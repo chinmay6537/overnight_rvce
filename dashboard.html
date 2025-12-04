@@ -4,21 +4,26 @@
   <meta charset="UTF-8" />
   <title>Proctor Dashboard · ProctorSense</title>
   <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
   <header class="top-bar">
-    <div class="logo">ProctorSense</div>
+    <div class="logo">[ PROCTORSENSE ]</div>
     <nav class="nav-links">
       <a href="index.html">Home</a>
-      <a href="exam.html">Take Exam</a>
-      <a href="dashboard.html" class="active">Proctor Dashboard</a>
+      <a href="exam.html">Exam Demo</a>
+      <a href="dashboard.html" class="active">Live Console</a>
     </nav>
   </header>
 
   <main class="container">
-    <section class="page-header">
-      <h1>Proctor Dashboard</h1>
-      <p>Monitor live risk scores for all candidates in the current session.</p>
+    <section class="page-header" style="display:flex; justify-content:space-between; align-items:end; margin-bottom:20px;">
+      <div>
+        <h1>LIVE MONITORING CONSOLE</h1>
+        <p style="color:var(--text-dim)">Real-time telemetry and risk analysis feed.</p>
+      </div>
+      <!-- NEW EXPORT BUTTON -->
+      <button id="exportBtn" class="btn primary">DOWNLOAD REPORT (.CSV)</button>
     </section>
 
     <section class="dashboard-main">
@@ -28,29 +33,24 @@
             <tr>
               <th>Candidate ID</th>
               <th>Risk Score</th>
-              <th>Level</th>
-              <th>Last Updated</th>
+              <th>Status</th>
+              <th>Last Signal</th>
             </tr>
           </thead>
           <tbody>
-            <!-- rows will be injected by dashboard.js -->
+            <!-- rows injected by js -->
           </tbody>
         </table>
       </div>
 
       <div class="side-panel">
-        <h2>Selected Candidate</h2>
-        <p id="selectedCandidate">Click a row to see details.</p>
+        <h2>Target Analysis</h2>
         <div id="candidateDetails">
-          <!-- future: risk timeline, event log, etc. -->
+          <p style="color:var(--text-dim)">Select a candidate from the grid to initialize deep scan.</p>
         </div>
       </div>
     </section>
   </main>
-
-  <footer class="footer">
-    <p>© 2025 ProctorSense</p>
-  </footer>
 
   <script src="dashboard.js"></script>
 </body>

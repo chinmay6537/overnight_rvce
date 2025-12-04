@@ -1,81 +1,132 @@
 // dashboard.js
 const tableBody = document.querySelector("#candidateTable tbody");
-const selectedText = document.getElementById("selectedCandidate");
 const candidateDetails = document.getElementById("candidateDetails");
+const exportBtn = document.getElementById("exportBtn");
+
+let currentData = []; // Store data globally for export
 
 function updateDashboard() {
     fetch('http://localhost:3000/api/status')
-        .then(response => response.json())
+        .then(res => res.json())
         .then(data => {
+            currentData = data; // Save for export
             renderTable(data);
         })
-        .catch(err => console.error("Dashboard offline"));
+        .catch(err => console.log("Waiting for data stream..."));
 }
 
 function renderTable(candidates) {
-    // Sort high risk to the top
+    // Sort: Critical Risk at the top
     candidates.sort((a, b) => b.riskScore - a.riskScore);
-
     tableBody.innerHTML = ""; 
 
     candidates.forEach(student => {
         const row = document.createElement("tr");
         
-        let riskColor = "white"; 
-        let rowBg = "";
-
-        if(student.level === "Medium") {
-            riskColor = "orange";
-        }
-        if(student.level === "High") {
-            riskColor = "#ff4444";
-            rowBg = "rgba(255, 0, 0, 0.1)"; // Highlight high risk rows
-        }
-
-        row.style.backgroundColor = rowBg;
+        let badgeClass = "risk-low";
+        let rowClass = "";
         
+        if (student.riskScore > 40) badgeClass = "risk-med";
+        if (student.riskScore > 75) { 
+            badgeClass = "risk-high";
+            rowClass = "animate-pulse"; 
+        }
+
+        row.className = rowClass;
+
         row.innerHTML = `
-            <td>${student.id}</td>
-            <td style="color: ${riskColor}; font-weight: bold; font-size: 1.1em;">${student.riskScore}%</td>
-            <td>${student.level}</td>
-            <td>${new Date(student.lastUpdate).toLocaleTimeString()}</td>
+            <td style="font-family: var(--font-code); color: #fff; letter-spacing:1px;">${student.id}</td>
+            <td>
+                <span class="risk-badge ${badgeClass}">
+                    RISK: ${student.riskScore}%
+                </span>
+            </td>
+            <td style="font-family: var(--font-code); color: var(--text-dim);">${student.level}</td>
+            <td style="font-family: var(--font-code); font-size: 0.9rem; color: var(--text-dim);">
+                ${new Date(student.lastUpdate).toLocaleTimeString()}
+            </td>
         `;
 
+        row.style.cursor = "pointer";
         row.addEventListener("click", () => showDetails(student));
         tableBody.appendChild(row);
     });
 }
 
 function showDetails(student) {
-    selectedText.innerHTML = `Analyzing: <span style="color:#2563eb">${student.id}</span>`;
-    
-    // Reverse events to show newest first
-    const recentEvents = student.events.slice().reverse().slice(0, 8); 
+    const alerts = student.events.filter(e => e.type !== "TAB_SWITCH_IN").slice().reverse().slice(0, 8);
 
-    let eventHtml = recentEvents.map(e => {
-        let color = "#9ca3af";
-        if(e.type.includes("TAB")) color = "orange";
-        if(e.type.includes("IMPOSSIBLE")) color = "red";
-        
-        return `<li style="color:${color}; margin-bottom:5px;">
-            <small>[${new Date(e.timestamp).toLocaleTimeString()}]</small><br>
-            <strong>${e.type}</strong>: ${e.message}
-        </li>`;
-    }).join('');
+    let logsHtml = alerts.length === 0 
+        ? `<div style="color: var(--neon-green); font-family: var(--font-code);">>> NO ANOMALIES DETECTED</div>`
+        : alerts.map(e => `
+            <div style="border-left: 2px solid var(--neon-red); padding-left: 10px; margin-bottom: 12px; background: rgba(255,0,0,0.05);">
+                <div style="color: #fff; font-weight: 700; font-family: var(--font-code);">${e.type}</div>
+                <div style="color: var(--text-dim); font-size: 0.9rem;">${e.message}</div>
+                <div style="color: var(--text-dim); font-size: 0.8rem; font-family: var(--font-code); margin-top: 4px;">
+                    ${new Date(e.timestamp).toLocaleTimeString()}
+                </div>
+            </div>
+          `).join('');
 
     candidateDetails.innerHTML = `
-        <div style="background:#1e293b; padding:15px; border-radius:8px;">
-            <h3>Risk Score: ${student.riskScore} / 100</h3>
-            <p>Risk Level: <strong>${student.level}</strong></p>
-            <hr style="border-color:#334155">
-            <h4>Live Event Log:</h4>
-            <ul style="list-style:none; padding:0;">
-                ${eventHtml || "<li>No suspicious events yet.</li>"}
-            </ul>
+        <div style="border-bottom: 1px solid var(--border-dim); padding-bottom: 15px; margin-bottom: 15px;">
+            <h2 style="margin:0; font-family: var(--font-code); color: var(--neon-cyan);">${student.id}</h2>
+            <div style="font-size: 0.8rem; color: var(--text-dim); font-family: var(--font-code);">DEVICE: ${student.device?.platform || "Unknown"}</div>
+        </div>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
+            <div style="background: rgba(0,0,0,0.3); padding:15px; text-align:center; border:1px solid var(--border-dim);">
+                <div style="font-size:2rem; font-weight:700; color:${student.riskScore > 50 ? 'var(--neon-red)' : 'var(--neon-green)'}">
+                    ${student.riskScore}
+                </div>
+                <div style="color:var(--text-dim); font-size:0.8rem; font-family: var(--font-code);">RISK INDEX</div>
+            </div>
+            <div style="background: rgba(0,0,0,0.3); padding:15px; text-align:center; border:1px solid var(--border-dim);">
+                <div style="font-size:1.2rem; font-weight:700; color: #fff; line-height: 2rem;">
+                    ${student.level}
+                </div>
+                <div style="color:var(--text-dim); font-size:0.8rem; font-family: var(--font-code);">STATUS</div>
+            </div>
+        </div>
+
+        <h3 style="color: var(--neon-cyan); font-size: 1rem; margin-bottom: 15px;">TELEMETRY LOG</h3>
+        <div style="max-height:300px; overflow-y:auto; padding-right: 5px;">
+            ${logsHtml}
         </div>
     `;
 }
 
-// Refresh every 1 second for "Real-Time" feel
+// --- NEW: EXPORT TO CSV (EXCEL) ---
+exportBtn.addEventListener("click", () => {
+    if (currentData.length === 0) {
+        alert("No data available to export.");
+        return;
+    }
+
+    // 1. Create CSV Headers
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Candidate ID,Risk Score,Level,Device Info,Last Update,Total Violations\n";
+
+    // 2. Loop through data and format rows
+    currentData.forEach(student => {
+        // Count bad events
+        const violations = student.events.filter(e => e.type !== "TAB_SWITCH_IN").length;
+        const device = student.device ? student.device.platform : "Unknown";
+        const time = new Date(student.lastUpdate).toLocaleString();
+        
+        // Add row
+        csvContent += `${student.id},${student.riskScore},${student.level},${device},"${time}",${violations}\n`;
+    });
+
+    // 3. Trigger Download
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "proctor_report.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+});
+
+// Auto-refresh loop
 setInterval(updateDashboard, 1000);
-updateDashboard();

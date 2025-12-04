@@ -6,82 +6,99 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// IN-MEMORY DATABASE
-// Structure: { "Student-1": { riskScore: 0, events: [], level: "Low" } }
+// DATABASE MOCK
 let candidates = {};
 
-// --- RECEIVE DATA FROM SDK ---
 app.post('/api/track', (req, res) => {
-    const { candidateId, events, mouseActivity } = req.body;
+    const { candidateId, events, metrics } = req.body; // metrics includes typing speed
 
     if (!candidateId) return res.status(400).send("No ID");
 
-    // Initialize candidate if new
+    // Initialize New Candidate
     if (!candidates[candidateId]) {
-        candidates[candidateId] = { riskScore: 0, events: [], level: "Low" };
+        candidates[candidateId] = { 
+            riskScore: 0, 
+            events: [], 
+            level: "Low", 
+            focusTime: 100, // Starts at 100% focus
+            startTime: Date.now()
+        };
     }
 
-    let currentRisk = candidates[candidateId].riskScore;
+    let student = candidates[candidateId];
+    let currentRisk = student.riskScore;
     let newEvents = [];
-    let hasBadBehavior = false;
+    let violationDetected = false;
 
-    // --- 1. RISK CALCULATION ENGINE ---
+    // --- 1. ANALYZE EVENTS ---
     events.forEach(event => {
-        newEvents.push(event);
-        hasBadBehavior = true;
+        // TAB SWITCHING
+        if (event.type === "TAB_SWITCH_OUT") {
+            currentRisk += 15;
+            newEvents.push(event);
+            violationDetected = true;
+        }
         
-        // SCORING RULES
-        if (event.type === "TAB_SWITCH_OUT") currentRisk += 20; // High Penalty
-        if (event.type === "PASTE") currentRisk += 10;          // Medium Penalty
-        if (event.type === "COPY") currentRisk += 5;            // Low Penalty
-        if (event.type === "IMPOSSIBLE_TYPING") currentRisk += 50; // CRITICAL (Bot detected)
+        // PASTE (Smart Check: Is it a short paste or a whole essay?)
+        if (event.type === "PASTE") {
+            const riskAdd = event.length > 50 ? 20 : 5; // Higher risk for long pastes
+            currentRisk += riskAdd;
+            newEvents.push({ ...event, message: `Pasted ${event.length} chars (Risk +${riskAdd})` });
+            violationDetected = true;
+        }
+
+        // IMPOSSIBLE TYPING (Bot Check)
+        if (event.type === "IMPOSSIBLE_TYPING") {
+            currentRisk += 50; // Critical hit
+            newEvents.push(event);
+            violationDetected = true;
+        }
     });
 
-    // Check for "Bot-like" stillness (Mouse moved less than 3 times in 3 seconds)
-    if (mouseActivity < 3) {
-        // Only penalize if they are also NOT typing (to avoid flagging thinkers)
-        // For simplicity in hackathon, we add a small risk
-        currentRisk += 2;
+    // --- 2. ANALYZE METRICS (Typing Speed) ---
+    // If typing speed > 300 WPM, it's likely a script or hidden paste
+    if (metrics && metrics.wpm > 300) {
+        currentRisk += 40;
+        newEvents.push({ 
+            type: "SUPERHUMAN_SPEED", 
+            message: `Typing speed ${metrics.wpm} WPM detected (Bot threshold is 300)` 
+        });
+        violationDetected = true;
     }
 
-    // --- 2. DYNAMIC DECAY (The Fairness Logic) ---
-    // If no bad events occurred in this packet, heal the score
-    if (!hasBadBehavior) {
-        currentRisk -= 5; // Decay by 5 points every 3 seconds
+    // --- 3. DYNAMIC DECAY (Healing) ---
+    // If no violations, risk drops slowly (rewarding good behavior)
+    if (!violationDetected) {
+        currentRisk -= 2; 
     }
 
-    // Clamp scores (0 to 100)
-    if (currentRisk < 0) currentRisk = 0;
-    if (currentRisk > 100) currentRisk = 100;
+    // Clamping
+    currentRisk = Math.max(0, Math.min(100, currentRisk));
 
-    // Determine Level
+    // Determine Status
     let level = "Low";
-    if (currentRisk > 30) level = "Medium";
-    if (currentRisk > 70) level = "High";
+    if (currentRisk > 40) level = "Medium";
+    if (currentRisk > 75) level = "Critical";
 
-    // Update Memory
-    candidates[candidateId].riskScore = currentRisk;
-    candidates[candidateId].level = level;
-    candidates[candidateId].events.push(...newEvents);
-    candidates[candidateId].lastUpdate = new Date();
+    // Update Database
+    student.riskScore = Math.floor(currentRisk);
+    student.level = level;
+    student.events.push(...newEvents);
+    student.lastUpdate = Date.now();
 
-    console.log(`Updated ${candidateId}: Risk ${currentRisk} (${level})`);
+    console.log(`User: ${candidateId} | Risk: ${student.riskScore} | WPM: ${metrics?.wpm || 0}`);
 
-    // --- 3. SEND INTERVENTION SIGNAL BACK TO SDK ---
+    // Response to SDK (Triggers the popup)
     res.json({ 
         success: true, 
-        riskScore: currentRisk,
-        intervention: currentRisk > 70 ? "WARN" : "NONE" 
+        riskScore: student.riskScore,
+        violation: violationDetected // Tell SDK to flash red immediately
     });
 });
 
-// --- SEND DATA TO DASHBOARD ---
 app.get('/api/status', (req, res) => {
-    const dashboardData = Object.keys(candidates).map(id => ({
-        id: id,
-        ...candidates[id]
-    }));
-    res.json(dashboardData);
+    const data = Object.keys(candidates).map(id => ({ id, ...candidates[id] }));
+    res.json(data);
 });
 
-app.listen(3000, () => console.log("ProctorSense Brain is running on port 3000..."));
+app.listen(3000, () => console.log("ProctorSense Brain Active on Port 3000"));
