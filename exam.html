@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Online Exam · ProctorSense</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="top-bar">
+    <div class="logo">ProctorSense</div>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="exam.html" class="active">Take Exam</a>
+      <a href="dashboard.html">Proctor Dashboard</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="page-header">
+      <h1>Online Exam</h1>
+      <p>This page tracks your behaviour for integrity analysis (no camera used).</p>
+    </section>
+
+    <section class="exam-meta">
+      <label>
+        Candidate ID
+        <input type="text" id="candidateId" placeholder="Enter your roll number" />
+      </label>
+
+      <!-- Timer like CodeTantra -->
+      <span class="exam-status">
+        Time left:
+        <span id="timerDisplay">00:30:00</span>
+      </span>
+
+      <!-- Monitoring status text -->
+      <span class="exam-status" id="examStatus">Monitoring inactive</span>
+    </section>
+
+    <section class="exam-body">
+      <!-- Question container: ONE question at a time -->
+      <div class="question-card" id="questionContainer">
+        <h2 id="questionTitle">Question</h2>
+        <p id="questionText">Loading questions...</p>
+        <textarea id="answerBox" rows="6" placeholder="Type your answer here..."></textarea>
+      </div>
+
+      <!-- Question navigation like CodeTantra: Prev / Next / status -->
+      <div class="question-nav">
+        <button class="btn secondary" id="prevBtn">Previous</button>
+
+        <span id="questionIndicator">Question 1 of 2</span>
+
+        <button class="btn secondary" id="nextBtn">Next</button>
+      </div>
+
+      <!-- Final submit -->
+      <button class="btn primary" id="submitExam">Submit Exam</button>
+    </section>
+
+    <section class="debug-panel">
+      <h3>Monitoring Summary (for demo)</h3>
+      <p id="debugInfo">Behaviour metrics will appear here while you interact.</p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 ProctorSense</p>
+  </footer>
+
+  <script src="exam.js"></script>
+  <script src="proctor-sdk.js"></script>
+</body>
+</html>

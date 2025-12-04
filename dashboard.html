@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Proctor Dashboard · ProctorSense</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="top-bar">
+    <div class="logo">ProctorSense</div>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="exam.html">Take Exam</a>
+      <a href="dashboard.html" class="active">Proctor Dashboard</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="page-header">
+      <h1>Proctor Dashboard</h1>
+      <p>Monitor live risk scores for all candidates in the current session.</p>
+    </section>
+
+    <section class="dashboard-main">
+      <div class="table-wrapper">
+        <table id="candidateTable">
+          <thead>
+            <tr>
+              <th>Candidate ID</th>
+              <th>Risk Score</th>
+              <th>Level</th>
+              <th>Last Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- rows will be injected by dashboard.js -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="side-panel">
+        <h2>Selected Candidate</h2>
+        <p id="selectedCandidate">Click a row to see details.</p>
+        <div id="candidateDetails">
+          <!-- future: risk timeline, event log, etc. -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 ProctorSense</p>
+  </footer>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
