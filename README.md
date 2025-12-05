@@ -1,153 +1,96 @@
-ProctorSense
+# 🚨 ProctorSense: Security Without Surveillance. 👁️‍🗨️
+### The Ultimate Privacy-First, Behavioral Biometric Proctoring System.
 
-Security Without Surveillance.
+***
 
-A privacy-first, behavioral biometric proctoring system for online assessments. ProctorSense ensures academic integrity without invasive webcams or screen recording by analyzing user interaction patterns.
+## 🛑 The Surveillance Crisis
+Traditional online proctoring is a flawed security relic. It equates **security with surveillance**, demanding invasive webcams, screen recording, and eye-tracking that actively harm the learning experience.
 
-📖 Project Overview
+* **🚫 Privacy Nightmare:** It records students' private homes, violating critical regulations like **GDPR/FERPA** and causing extreme anxiety for honest users.
+* **🐢 Legacy Tech:** High bandwidth requirements **exclude** students with poor internet connections.
+* **🤖 Cheaters Win:** These systems are easily bypassed and **fail to detect modern cheating** methods, such as students seamlessly copy-pasting from Generative AI tools (like ChatGPT).
 
-The Problem:
-Traditional online proctoring equates "surveillance" with "security." It relies on invasive webcams and eye-tracking, which:
+[Explanation of the problem on YouTube](https://www.youtube.com/watch?v=DGWupjbOxfg)
+[Full Project Details (PDF/PPT)](https://drive.google.com/file/d/16z3H8QLCtSx3DB5VZa19uETmWrvrmgL7/view?usp=sharing)
 
-Causes high anxiety for honest students.
+***
 
-Violates privacy regulations (GDPR/FERPA) by recording home environments.
+## ✨ The ProctorSense Revolution
+We don't watch the student; **we analyze the interaction**. ProctorSense shifts the focus from invasive filming to **behavioral biometrics**. A lightweight **JavaScript SDK** silently monitors telemetry metadata—keystroke rhythm, mouse patterns, navigation events, and window focus states.
 
-Fails to detect modern cheating methods like GenAI (ChatGPT) copy-pasting.
+This data feeds a real-time risk engine that instantly calculates an **"Integrity Risk Score,"** flagging suspicious activity *without* ever compromising user privacy.
 
-Requires high bandwidth, excluding students with poor internet connections.
+***
 
-Explanation:
-https://www.youtube.com/watch?v=DGWupjbOxfg
+## 🔎 Key Features: The Next-Gen Security Arsenal
 
-PDF/PPT:
-https://drive.google.com/file/d/16z3H8QLCtSx3DB5VZa19uETmWrvrmgL7/view?usp=sharing
+### 🛡️ 100% Privacy Preserved
+* **ZERO Intrusiveness:** **No cameras, no screen recording, no microphones** (unless a feature is specifically enabled just to measure volume levels). We monitor behavior, not bodies.
 
-The Solution:
+### 🤖 Instant Bot & Script Detection
+* Our system analyzes **Typing Speed (WPM)** and keystroke flight time. If a user types at a **superhuman speed (WPM > 300)** or instantly pastes large chunks of text, it’s flagged as a bot, script, or immediate breach.
 
-ProctorSense shifts from watching the student to analyzing the interaction. It uses a lightweight JavaScript SDK to monitor telemetry metadata—keystroke dynamics, mouse patterns, navigation events, and focus states. This data feeds into a real-time risk engine that calculates an "Integrity Risk Score," flagging suspicious behavior instantly while respecting user privacy.
+### 📉 Dynamic Risk Decay: The Forgiving Engine
+* Unlike rigid, rule-based systems that trigger false alarms, ProctorSense is **"forgiving."** If a student briefly makes a minor mistake (like looking away) but quickly returns to focus, their risk score automatically **"heals" (decreases)** over time. This drastically reduces false positives.
 
-✨ Key Features
+### 🍯 The "Honeypot" Trap
+* We embed **invisible tracking text** within the exam questions. If a student tries to "Select All" and copy-paste the question into an external AI tool, they unknowingly copy the hidden code, triggering an **immediate critical alert**.
 
-🚫 Non-Intrusive Monitoring: No cameras, no microphones (unless specific audio monitoring is enabled for volume levels only), and no screen recording. 100% Privacy Preserved.
+### 🔒 State-Based Monitoring
+* Risk is cumulative. We apply **continuous penalties** for exiting Full Screen mode or losing window focus. The longer a student is "away" or out of compliance, the higher their risk score climbs.
 
-🤖 Bot & Script Detection: Analyzes Typing Speed (WPM) and keystroke flight time. If a user types at superhuman speeds (>300 WPM) or pastes large chunks of text instantly, it's flagged as a bot or script.
+### ⚡ Real-Time "Command Center" Dashboard
+* Proctors get a live dashboard that auto-sorts students by their **Risk Level (0-100)**. It provides forensic, time-stamped logs (e.g., **"Tab Switch at 10:45 AM"**) and allows easy export of forensic reports via CSV.
 
-📉 Dynamic Risk Decay: The system is "forgiving." If a student makes a minor mistake (like looking away briefly) but returns to focus, their risk score heals (decreases) over time. This drastically reduces false positives compared to rigid rule-based systems.
+***
 
-🍯 The "Honeypot" Trap: Invisible text is embedded within exam questions. If a student tries to "Select All" and copy-paste the question into an AI tool, they accidentally copy the tracking code, triggering an immediate alert.
+## ⚙️ The Blueprint: System Architecture
 
-🔒 State-Based Monitoring: Continuous penalties for staying out of Full Screen or losing window focus. The longer a student is "away," the higher the risk score climbs.
+| Component | Role | Mechanics |
+| :--- | :--- | :--- |
+| **The Spy** (Client SDK) | The browser-side listener. | A lightweight `proctor-sdk.js` file monitors DOM events: `visibilitychange`, `blur`, `paste`, `keydown`, `fullscreenchange`. It bundles telemetry and sends a JSON payload to the server every **3 seconds**. |
+| **The Brain** (Node.js Server) | The real-time risk evaluator. | Receives payloads and applies **custom heuristic logic**: Checks if WPM > 300 (Critical Risk: +50), checks Full Screen state (+5 points/3sec penalty), and checks for Honeypot activation (Critical Risk: +60). It calculates the dynamic Risk Score and handles the **"Healing" logic**. |
+| **The View** (Proctor Dashboard) | The visualization hub. | Fetches live status from the server and visualizes high-risk students with a **"Cyber-Security HUD" aesthetic**. |
 
-⚡ Real-Time Dashboard: A live "Command Center" for proctors that auto-sorts students by risk level, providing detailed violation logs (e.g., "Tab Switch at 10:45 AM").
+### 🛠️ Tech Stack
+* **Frontend:** HTML5, CSS3 (**Custom Cyber-Security HUD Theme**), **Vanilla JavaScript**.
+* **Backend:** **Node.js, Express.js** (REST API).
+* **Analysis Logic:** Custom Heuristic Algorithms (State-based penalties & Dynamic Decay).
+* **Tools:** VS Code, Git/GitHub.
 
-⚙️ System Architecture
+***
 
-The Spy (Client SDK):
+## 🚀 Mission Control: Getting Started & Demo
 
-A lightweight proctor-sdk.js file runs on the student's browser.
+### Prerequisites
+* Node.js installed on your machine.
 
-Listens for DOM events: visibilitychange, blur, paste, keydown, fullscreenchange.
+### Installation & Launch
+1.  **Clone the Repository:** `git clone https://github.com/chinmay6537/overnight_rvce.git`
+2.  **Install Dependencies:** `cd overnight_rvce` (or `cd overnight_rvce/server` if a server folder exists) then run `npm install`.
+3.  **Run the Server:** `node server.js`
+    * *You should see:* **ProctorSense Brain Active on Port 3000**
+4.  **Launch:** Open `login.html` in your browser.
 
-Bundles telemetry data and sends it to the server every 3 seconds.
+### 🧪 Demo Scenarios (Trigger the Violations)
+Use the following credentials to test:
+* **Student Login:** Any USN (e.g., `1RV23CS001`) / Password: `123`
+* **Proctor Login:** Username: `p` / Password: `123`
 
-The Brain (Node.js Server):
+1.  **Start Exam:** Log in as the student and click "Begin Assessment." The browser will **force Full Screen**.
+2.  **Trigger Tab Switch:** Press **Alt+Tab** to leave the window. Watch the risk score **climb**.
+3.  **Trigger Exit Full Screen:** Press **Esc**. A warning modal will block the view.
+4.  **Trigger Bot Detection:** Copy a large block of text and **paste** it into the answer box. An **immediate high-risk flag** will be generated.
+5.  **Check Dashboard:** Log in as the Proctor in a separate tab/window to view the **live updates** and test the **"Download Report (.CSV)"** button.
 
-Receives JSON payloads.
+***
 
-Applies heuristic logic:
+## 🔮 Future Warfare: The Road Ahead
+* **LMS Integration:** Developing official plugins for major platforms like **Canvas, Moodle, and Blackboard**.
+* **Mouse Heatmaps:** Visualizing "robotic" vs. "human" mouse paths to detect automated clicker scripts.
+* **Offline Mode:** Storing violation logs locally for students with unstable internet connections, with a sync upon reconnection.
+* **Blockchain Logging:** Storing exam integrity logs on an **immutable ledger** for indisputable audit trails and dispute resolution.
 
-Is WPM > 300? -> Critical Risk (+50)
+***
 
-Is Full Screen Active? -> No? (+5 points/3sec)
-
-Is Honeypot Triggered? -> Critical Risk (+60)
-
-Calculates the dynamic Risk Score (0-100) and handles the "Healing" logic.
-
-The View (Proctor Dashboard):
-
-Fetches real-time status from the server.
-
-Visualizes high-risk students with a "Cyber-Security HUD" aesthetic.
-
-Allows exporting forensic reports via CSV.
-
-🛠️ Tech Stack
-
-Frontend: HTML5, CSS3 (Custom Cyber-Security HUD Theme), Vanilla JavaScript.
-
-Backend: Node.js, Express.js (REST API).
-
-Analysis Logic: Custom Heuristic Algorithms (State-based penalties & Dynamic Decay).
-
-Tools: VS Code, Git/GitHub.
-
-🚀 Getting Started
-
-Prerequisites
-
-Node.js installed on your machine.
-
-Installation
-
-Clone the Repository:
-
-git clone [https://github.com/chinmay6537/overnight_rvce.git](https://github.com/chinmay6537/overnight_rvce.git)
-cd overnight_rvce
-
-
-Install Dependencies:
-Navigate to the server directory (if applicable, or root if package.json is there):
-
-# If there is a server folder:
-cd server
-npm install
-# Or if package.json is in the root:
-npm install
-
-
-Run the Server:
-
-node server.js
-
-
-You should see: ProctorSense Brain Active on Port 3000
-
-Launch the Application:
-
-Open login.html in your browser.
-
-Student Login: Use any USN (e.g., 1RV23CS001) and password 123.
-
-Proctor Login: Use username p and password 123.
-
-🧪 How to Test (Demo Scenarios)
-
-Login: Start at login.html and log in as a student.
-
-Start Exam: Click "Begin Assessment" on the exam page. The browser will force Full Screen.
-
-Trigger Violations:
-
-Tab Switch: Alt+Tab to another window. Watch the risk score rise.
-
-Exit Full Screen: Press Esc. A warning modal will block your view.
-
-Bot Detection: Copy a large block of text and paste it into the answer box. Immediate high-risk flag.
-
-Check Dashboard: Open login.html in a new tab/window, log in as Proctor, and view the live updates. Try the "Download Report (.CSV)" button.
-
-🔮 Future Scope
-
-LMS Integration: Plugins for Canvas, Moodle, and Blackboard.
-
-Mouse Heatmaps: Visualizing "robotic" vs. "human" mouse paths to detect automated clickers.
-
-Offline Mode: Storing violation logs locally for students with unstable internet connections and syncing upon reconnection.
-
-Blockchain Logging: Storing exam integrity logs on an immutable ledger for dispute resolution.
-
-<p align="center">
-Built with ❤️ at the 8th Mile X Overnight Hackathon
-</p>
+Built with ❤️ at the 8th Mile X Overnight Hackathon.
