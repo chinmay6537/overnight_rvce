@@ -10,7 +10,7 @@ Traditional online proctoring is a flawed security relic. It equates **security 
 * **🐢 Legacy Tech:** High bandwidth requirements **exclude** students with poor internet connections.
 * **🤖 Cheaters Win:** These systems are easily bypassed and **fail to detect modern cheating** methods, such as students seamlessly copy-pasting from Generative AI tools (like ChatGPT).
 
-[Explanation of the problem on YouTube](https://www.youtube.com/watch?v=DGWupjbOxfg)
+[Explanation of the problem](https://www.youtube.com/watch?v=DGWupjbOxfg) <br> <br>
 [Full Project Details (PDF/PPT)](https://drive.google.com/file/d/16z3H8QLCtSx3DB5VZa19uETmWrvrmgL7/view?usp=sharing)
 
 ***
@@ -70,7 +70,7 @@ This data feeds a real-time risk engine that instantly calculates an **"Integrit
 2.  **Install Dependencies:** `cd overnight_rvce` (or `cd overnight_rvce/server` if a server folder exists) then run `npm install`.
 3.  **Run the Server:** `node server.js`
     * *You should see:* **ProctorSense Brain Active on Port 3000**
-4.  **Launch:** Open `login.html` in your browser.
+4.  **Launch:** Open `index.html` in your browser.
 
 ### 🧪 Demo Scenarios (Trigger the Violations)
 Use the following credentials to test:
@@ -92,5 +92,10 @@ Use the following credentials to test:
 * **Blockchain Logging:** Storing exam integrity logs on an **immutable ledger** for indisputable audit trails and dispute resolution.
 
 ***
+A project by <br>
+Chinmay S <br>
+Koushaik Sannapanneni <br>
+Chalasani Chandra Sriyanth <br>
 
 Built with ❤️ at the 8th Mile X Overnight Hackathon.
+***

@@ -6,9 +6,9 @@
     let keyTimestamps = [];
     let isMonitoring = false; 
     let activeCandidateId = null;
-    let audioContext = null;
-    let microphone = null;
     
+    // REMOVED: audioContext and microphone variables
+
     const SEND_INTERVAL = 3000; 
 
     const startBtn = document.getElementById("startMonitoringBtn");
@@ -22,30 +22,7 @@
         }
     }
 
-    async function initAudio() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            audioContext = new AudioContext();
-            microphone = audioContext.createMediaStreamSource(stream);
-            const analyser = audioContext.createAnalyser();
-            analyser.fftSize = 256;
-            microphone.connect(analyser);
-            const dataArray = new Uint8Array(analyser.frequencyBinCount);
-            
-            setInterval(() => {
-                if(!isMonitoring) return;
-                analyser.getByteFrequencyData(dataArray);
-                let sum = 0;
-                for(let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-                let average = sum / dataArray.length;
-                if (average > 30) {
-                    logEvent("AUDIO_ANOMALY", `High noise level detected (${Math.round(average)}dB)`);
-                }
-            }, 2000);
-        } catch (err) {
-            console.warn("Audio monitoring denied");
-        }
-    }
+    // REMOVED: initAudio function entirely
 
     if (startBtn) {
         startBtn.addEventListener("click", () => {
@@ -75,7 +52,8 @@
             }
 
             enterFullScreen();
-            initAudio();
+            // REMOVED: initAudio() call
+            
             document.addEventListener("contextmenu", event => event.preventDefault());
         });
     }
