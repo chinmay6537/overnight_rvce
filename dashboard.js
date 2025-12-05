@@ -6,7 +6,7 @@ const exportBtn = document.getElementById("exportBtn");
 let currentData = []; // Store data globally for export
 
 function updateDashboard() {
-    fetch('http://localhost:3000/api/status')
+    fetch('/api/status')
         .then(res => res.json())
         .then(data => {
             currentData = data; // Save for export
@@ -136,7 +136,7 @@ const resetBtn = document.getElementById("resetBtn");
 if (resetBtn) {
     resetBtn.addEventListener("click", () => {
         if(confirm("⚠️ ARE YOU SURE? \nThis will wipe all student data and risk scores.")) {
-            fetch('http://localhost:3000/api/reset', { method: 'POST' })
+            fetch('/api/reset', { method: 'POST' })
             .then(res => res.json())
             .then(() => {
                 alert("System Reset Complete.");
