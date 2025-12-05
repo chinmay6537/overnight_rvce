@@ -2,66 +2,336 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>ProctorSense // SECURITY CORE</title>
+  <title>ProctorSense – ACCESS CONTROL</title>
+  <!-- Link to the main stylesheet to inherit fonts if needed, but styles are redefined here for standalone use -->
   <link rel="stylesheet" href="style.css" />
-  <!-- Sci-Fi Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* CYBER-SECURITY PALETTE (Matches style.css) */
+      --bg-void: #030305;
+      --bg-panel: rgba(20, 20, 25, 0.85);
+      --border-dim: #1a2c38;
+      --border-bright: #00f0ff;
+      --neon-cyan: #00f0ff;
+      --neon-green: #0aff0a;
+      --neon-red: #ff2a2a;
+      --text-bright: #ffffff;
+      --text-dim: #8b9bb4;
+      --font-ui: 'Rajdhani', sans-serif;
+      --font-code: 'Share Tech Mono', monospace;
+    }
+
+    body {
+      font-family: var(--font-ui);
+      background-color: var(--bg-void);
+      color: var(--text-bright);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      /* Grid Background */
+      background-image: 
+        linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+      background-size: 30px 30px;
+    }
+
+    .shell {
+      max-width: 500px;
+      width: 100%;
+      padding: 40px;
+      border: 1px solid var(--border-dim);
+      border-left: 4px solid var(--border-bright);
+      background: var(--bg-panel);
+      box-shadow: 0 0 30px rgba(0,0,0,0.7);
+      backdrop-filter: blur(10px);
+      position: relative;
+    }
+
+    /* Decorative corner accent */
+    .shell::after {
+      content: ''; position: absolute; top: -1px; right: -1px;
+      width: 20px; height: 20px;
+      border-top: 2px solid var(--neon-cyan);
+      border-right: 2px solid var(--neon-cyan);
+    }
+
+    .title {
+      font-family: var(--font-code);
+      letter-spacing: 2px;
+      font-size: 14px;
+      text-transform: uppercase;
+      color: var(--neon-cyan);
+      margin-bottom: 5px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 32px;
+      font-weight: 700;
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+      text-transform: uppercase;
+    }
+
+    .sub {
+      font-size: 16px;
+      color: var(--text-dim);
+      margin-bottom: 30px;
+      line-height: 1.4;
+    }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 25px;
+      border-bottom: 1px solid var(--border-dim);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      background: transparent;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-family: var(--font-code);
+      font-size: 16px;
+      text-transform: uppercase;
+      border: none;
+      border-bottom: 2px solid transparent;
+      transition: 0.3s;
+    }
+
+    .tab-btn:hover {
+      color: #fff;
+    }
+
+    .tab-btn.active {
+      color: var(--neon-cyan);
+      border-bottom: 2px solid var(--neon-cyan);
+      text-shadow: 0 0 8px var(--neon-cyan);
+      background: rgba(0, 240, 255, 0.05);
+    }
+
+    /* FORMS */
+    .login-card {
+      /* Removed generic card styles to blend with shell */
+      padding-top: 10px;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .field {
+      margin-bottom: 20px;
+    }
+
+    label {
+      font-family: var(--font-code);
+      font-size: 12px;
+      color: var(--text-dim);
+      display: block;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border-dim);
+      background: rgba(0,0,0,0.5);
+      color: var(--neon-cyan);
+      font-family: var(--font-code);
+      font-size: 16px;
+      box-sizing: border-box;
+      outline: none;
+      transition: 0.3s;
+    }
+
+    input:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.2) inset;
+    }
+
+    /* BUTTONS */
+    .login-btn {
+      width: 100%;
+      padding: 12px;
+      font-family: var(--font-code);
+      font-size: 16px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: bold;
+      cursor: pointer;
+      border: 1px solid var(--border-bright);
+      background: rgba(0, 240, 255, 0.1);
+      color: var(--neon-cyan);
+      transition: 0.3s;
+      margin-top: 5px;
+    }
+
+    .login-btn:hover {
+      background: var(--neon-cyan);
+      color: #000;
+      box-shadow: 0 0 20px var(--neon-cyan);
+    }
+
+    /* Proctor Button Style (Red/Danger) */
+    #proctorLoginBtn {
+      border-color: var(--neon-red);
+      color: var(--neon-red);
+      background: rgba(255, 42, 42, 0.1);
+    }
+    #proctorLoginBtn:hover {
+      background: var(--neon-red);
+      color: #000;
+      box-shadow: 0 0 20px var(--neon-red);
+    }
+
+    .error {
+      color: var(--neon-red);
+      font-family: var(--font-code);
+      font-size: 13px;
+      margin-top: 15px;
+      text-align: center;
+      display: none;
+      border: 1px solid var(--neon-red);
+      padding: 8px;
+      background: rgba(255, 0, 0, 0.1);
+    }
+
+    .meta {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 14px;
+      text-align: center;
+      font-family: var(--font-code);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
 <body>
+  <div class="shell">
+    <div class="title">[ PROCTORSENSE ]</div>
+    <h1>Secure Assessment</h1>
+    <p class="sub">
+      Identify yourself to proceed. System logs all access attempts.
+    </p>
 
-  <header class="top-bar">
-    <div class="logo">[ PROCTORSENSE ]</div>
-    <nav class="nav-links">
-      <a href="index.html" class="active">Product</a>
-      <a href="exam.html">Exam Demo</a>
-      <a href="dashboard.html">Live Console</a>
-    </nav>
-  </header>
-
-  <main class="container">
-    <section class="hero">
-      <div class="hero-text">
-        <div style="font-family: 'Share Tech Mono'; color: var(--neon-cyan); margin-bottom: 10px;">>> INITIALIZING SECURITY PROTOCOL...</div>
-        <h1>Behavioral Integrity <br>Verification System</h1>
-        <p>
-          Non-intrusive telemetry SDK for academic assessments. 
-          Replaces video surveillance with behavioral biometrics and algorithmic risk scoring.
-        </p>
-        <div style="margin-top: 30px; display: flex; gap: 15px;">
-          <a href="exam.html" class="btn primary">Launch Exam</a>
-          <a href="dashboard.html" class="btn secondary">Open Dashboard</a>
-        </div>
-      </div>
-      
-      <div class="hero-card">
-        <h3 style="color:var(--neon-cyan); margin-top:0;">SYSTEM CAPABILITIES</h3>
-        <ul>
-          <li>Telemetry Analysis (Mouse/Key)</li>
-          <li>Clipboard Heuristics</li>
-          <li>Bot & Script Detection</li>
-          <li>Real-time Latency < 50ms</li>
-        </ul>
-        <div style="margin-top:20px; padding-top:15px; border-top:1px solid var(--border-dim); font-family: 'Share Tech Mono'; font-size: 0.8rem; color: var(--text-dim);">
-          STATUS: <span style="color: var(--neon-green)">● ONLINE</span>
-        </div>
-      </div>
-    </section>
-
-    <div class="feature-grid">
-      <div class="feature-card">
-        <h3>01. TELEMETRY</h3>
-        <p>Captures micro-movements and focus events to build a behavioral profile without video.</p>
-      </div>
-      <div class="feature-card">
-        <h3>02. SCORING ENGINE</h3>
-        <p>Dynamic risk algorithms that adapt to user patterns, minimizing false positives.</p>
-      </div>
-      <div class="feature-card">
-        <h3>03. PRIVACY CORE</h3>
-        <p>GDPR-compliant data processing. No biometric images are stored or transmitted.</p>
-      </div>
+    <div class="tabs">
+      <button class="tab-btn active" id="studentTab">Student Access</button>
+      <button class="tab-btn" id="proctorTab">Proctor Console</button>
     </div>
-  </main>
 
+    <!-- STUDENT LOGIN -->
+    <div id="studentLogin" class="login-card">
+      <div class="field">
+        <label for="studentUsn">UNIVERSITY SEAT NUMBER (USN)</label>
+        <input id="studentUsn" placeholder="EX: 1RV21CS123" style="text-transform: uppercase;" />
+      </div>
+      <div class="field">
+        <label for="studentPassword">ACCESS KEY</label>
+        <input id="studentPassword" type="password" placeholder="••••••" />
+      </div>
+      <button class="login-btn" id="studentLoginBtn">INITIATE EXAM SESSION</button>
+      <div class="error" id="studentError"></div>
+      <p class="meta">SESSION ID: <span style="color:var(--neon-green)">ACTIVE</span></p>
+    </div>
+
+    <!-- PROCTOR LOGIN -->
+    <div id="proctorLogin" class="login-card" style="display:none;">
+      <div class="field">
+        <label for="proctorUsername">ADMINISTRATOR ID</label>
+        <input id="proctorUsername" placeholder="EX: FACULTY_01" />
+      </div>
+      <div class="field">
+        <label for="proctorPassword">SECURITY TOKEN</label>
+        <input id="proctorPassword" type="password" placeholder="••••••" />
+      </div>
+      <button class="login-btn" id="proctorLoginBtn">ACCESS SURVEILLANCE HUB</button>
+      <div class="error" id="proctorError"></div>
+    </div>
+  </div>
+
+  <script>
+    // Tabs
+    const studentTab = document.getElementById("studentTab");
+    const proctorTab = document.getElementById("proctorTab");
+    const studentLogin = document.getElementById("studentLogin");
+    const proctorLogin = document.getElementById("proctorLogin");
+
+    studentTab.onclick = function () {
+      studentTab.classList.add("active");
+      proctorTab.classList.remove("active");
+      studentLogin.style.display = "block";
+      proctorLogin.style.display = "none";
+    };
+
+    proctorTab.onclick = function () {
+      proctorTab.classList.add("active");
+      studentTab.classList.remove("active");
+      proctorLogin.style.display = "block";
+      studentLogin.style.display = "none";
+    };
+
+    // CREDENTIAL CONSTANTS
+    const STUDENT_MASTER_PASSWORD = "123";
+    const PROCTOR_USERNAME = "p";
+    const PROCTOR_PASSWORD = "123";
+
+    // Student login
+    document.getElementById("studentLoginBtn").onclick = function () {
+      const usn = document.getElementById("studentUsn").value.trim();
+      const password = document.getElementById("studentPassword").value.trim();
+      const error = document.getElementById("studentError");
+
+      if (!usn || !password) {
+        error.style.display = "block";
+        error.textContent = ">> ERROR: ENTER CREDENTIALS";
+        return;
+      }
+
+      if (password !== STUDENT_MASTER_PASSWORD) {
+        error.style.display = "block";
+        error.textContent = ">> ERROR: INVALID ACCESS KEY";
+        return;
+      }
+
+      // Save credentials for the exam page
+      localStorage.setItem("role", "student");
+      localStorage.setItem("usn", usn);
+      localStorage.setItem("proctor_candidate_id", usn); // Critical for SDK auto-fill
+      window.location.href = "exam.html";
+    };
+
+    // Proctor login
+    document.getElementById("proctorLoginBtn").onclick = function () {
+      const username = document.getElementById("proctorUsername").value.trim();
+      const password = document.getElementById("proctorPassword").value.trim();
+      const error = document.getElementById("proctorError");
+
+      if (!username || !password) {
+        error.style.display = "block";
+        error.textContent = ">> ERROR: ENTER ADMIN DATA";
+        return;
+      }
+
+      if (username !== PROCTOR_USERNAME || password !== PROCTOR_PASSWORD) {
+        error.style.display = "block";
+        error.textContent = ">> ERROR: UNAUTHORIZED ACCESS";
+        return;
+      }
+
+      localStorage.setItem("role", "proctor");
+      localStorage.setItem("username", username);
+      window.location.href = "dashboard.html";
+    };
+  </script>
 </body>
 </html>

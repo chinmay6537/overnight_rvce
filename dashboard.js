@@ -23,6 +23,7 @@ function renderTable(candidates) {
     candidates.forEach(student => {
         const row = document.createElement("tr");
         
+        // CSS Classes for the badges
         let badgeClass = "risk-low";
         let rowClass = "";
         
@@ -97,36 +98,56 @@ function showDetails(student) {
 }
 
 // --- NEW: EXPORT TO CSV (EXCEL) ---
-exportBtn.addEventListener("click", () => {
-    if (currentData.length === 0) {
-        alert("No data available to export.");
-        return;
-    }
+if (exportBtn) {
+    exportBtn.addEventListener("click", () => {
+        if (currentData.length === 0) {
+            alert("No data available to export.");
+            return;
+        }
 
-    // 1. Create CSV Headers
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Candidate ID,Risk Score,Level,Device Info,Last Update,Total Violations\n";
+        // 1. Create CSV Headers
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Candidate ID,Risk Score,Level,Device Info,Last Update,Total Violations\n";
 
-    // 2. Loop through data and format rows
-    currentData.forEach(student => {
-        // Count bad events
-        const violations = student.events.filter(e => e.type !== "TAB_SWITCH_IN").length;
-        const device = student.device ? student.device.platform : "Unknown";
-        const time = new Date(student.lastUpdate).toLocaleString();
-        
-        // Add row
-        csvContent += `${student.id},${student.riskScore},${student.level},${device},"${time}",${violations}\n`;
+        // 2. Loop through data and format rows
+        currentData.forEach(student => {
+            // Count bad events
+            const violations = student.events.filter(e => e.type !== "TAB_SWITCH_IN").length;
+            const device = student.device ? student.device.platform : "Unknown";
+            const time = new Date(student.lastUpdate).toLocaleString();
+            
+            // Add row
+            csvContent += `${student.id},${student.riskScore},${student.level},${device},"${time}",${violations}\n`;
+        });
+
+        // 3. Trigger Download
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "proctor_report.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     });
+}
 
-    // 3. Trigger Download
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "proctor_report.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-});
+const resetBtn = document.getElementById("resetBtn");
+
+if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+        if(confirm("⚠️ ARE YOU SURE? \nThis will wipe all student data and risk scores.")) {
+            fetch('http://localhost:3000/api/reset', { method: 'POST' })
+            .then(res => res.json())
+            .then(() => {
+                alert("System Reset Complete.");
+                // Clear local table
+                tableBody.innerHTML = "";
+                candidateDetails.innerHTML = "<p style='color:var(--text-dim)'>Waiting for data...</p>";
+                globalCandidateData = [];
+            });
+        }
+    });
+}
 
 // Auto-refresh loop
 setInterval(updateDashboard, 1000);

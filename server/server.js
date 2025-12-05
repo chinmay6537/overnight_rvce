@@ -1,4 +1,3 @@
-// server/server.js
 const express = require('express');
 const cors = require('cors');
 const app = express();
@@ -6,22 +5,27 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// DATABASE MOCK
 let candidates = {};
 
+// Reset Endpoint
+app.post('/api/reset', (req, res) => {
+    candidates = {};
+    console.log("--- SYSTEM RESET ---");
+    res.json({ success: true });
+});
+
 app.post('/api/track', (req, res) => {
-    const { candidateId, events, metrics } = req.body; // metrics includes typing speed
+    const { candidateId, events, metrics, status } = req.body;
 
     if (!candidateId) return res.status(400).send("No ID");
 
-    // Initialize New Candidate
     if (!candidates[candidateId]) {
         candidates[candidateId] = { 
             riskScore: 0, 
             events: [], 
             level: "Low", 
-            focusTime: 100, // Starts at 100% focus
-            startTime: Date.now()
+            startTime: Date.now(),
+            badStateDuration: 0
         };
     }
 
@@ -30,70 +34,63 @@ app.post('/api/track', (req, res) => {
     let newEvents = [];
     let violationDetected = false;
 
-    // --- 1. ANALYZE EVENTS ---
+    // --- EVENT PENALTIES (Instant Actions) ---
+    // These still add points instantly because they are deliberate actions
     events.forEach(event => {
-        // TAB SWITCHING
-        if (event.type === "TAB_SWITCH_OUT") {
-            currentRisk += 15;
-            newEvents.push(event);
+        if (event.type === "TAB_SWITCH_OUT") { currentRisk += 5; violationDetected = true; }
+        if (event.type === "FULL_SCREEN_EXIT") { currentRisk += 5; violationDetected = true; } // Reduced from 10
+        if (event.type === "FOCUS_LOST") { currentRisk += 2; violationDetected = true; } // Reduced from 5
+        
+        if (event.type === "PASTE") {
+            const riskAdd = event.length > 50 ? 10 : 2; 
+            currentRisk += riskAdd;
             violationDetected = true;
         }
         
-        // PASTE (Smart Check: Is it a short paste or a whole essay?)
-        if (event.type === "PASTE") {
-            const riskAdd = event.length > 50 ? 20 : 5; // Higher risk for long pastes
-            currentRisk += riskAdd;
-            newEvents.push({ ...event, message: `Pasted ${event.length} chars (Risk +${riskAdd})` });
-            violationDetected = true;
-        }
-
-        // IMPOSSIBLE TYPING (Bot Check)
-        if (event.type === "IMPOSSIBLE_TYPING") {
-            currentRisk += 50; // Critical hit
-            newEvents.push(event);
-            violationDetected = true;
-        }
+        if (event.type === "HONEYPOT_TRIGGER") { currentRisk += 30; violationDetected = true; }
+        if (event.type === "IMPOSSIBLE_TYPING") { currentRisk += 30; violationDetected = true; }
+        if (event.type === "AUDIO_ANOMALY") { currentRisk += 10; violationDetected = true; }
+        
+        newEvents.push(event);
     });
 
-    // --- 2. ANALYZE METRICS (Typing Speed) ---
-    // If typing speed > 300 WPM, it's likely a script or hidden paste
     if (metrics && metrics.wpm > 300) {
-        currentRisk += 40;
-        newEvents.push({ 
-            type: "SUPERHUMAN_SPEED", 
-            message: `Typing speed ${metrics.wpm} WPM detected (Bot threshold is 300)` 
-        });
+        currentRisk += 20;
+        newEvents.push({ type: "SUPERHUMAN_SPEED", message: `Speed: ${metrics.wpm}`, timestamp: Date.now() });
         violationDetected = true;
     }
 
-    // --- 3. DYNAMIC DECAY (Healing) ---
-    // If no violations, risk drops slowly (rewarding good behavior)
-    if (!violationDetected) {
-        currentRisk -= 2; 
+    // --- STATE PENALTIES (Continuous with Grace Period) ---
+    if (status) {
+        if (!status.isFullScreen || !status.isFocused) {
+            student.badStateDuration += 3; // Add 3 seconds (since interval is 3s)
+        } else {
+            student.badStateDuration = 0; // Reset
+        }
+
+        // Only punish if bad state lasts > 6 seconds (Grace Period)
+        if (student.badStateDuration > 6) {
+            currentRisk += 1; // SLOW PENALTY: Add only 1 point every 3 seconds
+            violationDetected = true;
+        }
     }
 
-    // Clamping
+    // --- HEALING ---
+    if (!violationDetected) {
+        currentRisk -= 2; // Heals 2 points every 3 seconds (Faster than punishment)
+    }
+
     currentRisk = Math.max(0, Math.min(100, currentRisk));
-
-    // Determine Status
     let level = "Low";
-    if (currentRisk > 40) level = "Medium";
-    if (currentRisk > 75) level = "Critical";
+    if (currentRisk > 30) level = "Medium";
+    if (currentRisk > 70) level = "Critical";
 
-    // Update Database
     student.riskScore = Math.floor(currentRisk);
     student.level = level;
     student.events.push(...newEvents);
     student.lastUpdate = Date.now();
 
-    console.log(`User: ${candidateId} | Risk: ${student.riskScore} | WPM: ${metrics?.wpm || 0}`);
-
-    // Response to SDK (Triggers the popup)
-    res.json({ 
-        success: true, 
-        riskScore: student.riskScore,
-        violation: violationDetected // Tell SDK to flash red immediately
-    });
+    res.json({ success: true, riskScore: student.riskScore, violation: violationDetected });
 });
 
 app.get('/api/status', (req, res) => {
@@ -101,4 +98,4 @@ app.get('/api/status', (req, res) => {
     res.json(data);
 });
 
-app.listen(3000, () => console.log("ProctorSense Brain Active on Port 3000"));
+app.listen(3000, () => console.log("Server Running on Port 3000"));

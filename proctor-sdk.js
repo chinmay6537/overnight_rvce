@@ -1,19 +1,155 @@
-// proctor-sdk.js
 (function() {
     console.log("ProctorSense SDK Loaded");
 
     let eventLog = [];
     let keyTimestamps = [];
-    let isMonitoring = false;
+    let isMonitoring = false; 
     let activeCandidateId = null;
     
-    // CONFIG
     const SEND_INTERVAL = 3000; 
 
-    // --- 1. START & DEVICE FINGERPRINT ---
     const startBtn = document.getElementById("startMonitoringBtn");
-    const idInput = document.getElementById("candidateId");
-    const statusText = document.getElementById("examStatus");
+    
+    function enterFullScreen() {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen().catch(err => console.log(err));
+        } else if (elem.webkitRequestFullscreen) { 
+            elem.webkitRequestFullscreen();
+        }
+    }
+
+    if (startBtn) {
+        startBtn.addEventListener("click", () => {
+            const idInput = document.getElementById("candidateId");
+            const val = idInput.value.trim();
+            if (val.length < 3) {
+                // Try getting from localStorage if empty
+                const stored = localStorage.getItem("proctor_candidate_id");
+                if(stored) activeCandidateId = stored;
+                else {
+                    alert("Please enter a valid Candidate ID.");
+                    return;
+                }
+            } else {
+                activeCandidateId = val;
+            }
+
+            isMonitoring = true;
+            startBtn.disabled = true;
+            startBtn.innerText = "EXAM IN PROGRESS";
+            
+            const statusText = document.getElementById("examStatus");
+            if(statusText) {
+                statusText.innerText = "✅ MONITORING ACTIVE";
+                statusText.style.color = "#10b981";
+            }
+
+            enterFullScreen();
+            document.addEventListener("contextmenu", event => event.preventDefault());
+        });
+    }
+
+    // --- WARNING SYSTEM ---
+    function triggerWarning(riskScore, isViolation, customMessage = null) {
+        if (!isMonitoring) return;
+
+        const body = document.body;
+        let warningBox = document.getElementById("ps-warning-modal");
+
+        if (!warningBox) {
+            warningBox = document.createElement("div");
+            warningBox.id = "ps-warning-modal";
+            // Non-intrusive Top Right Notification
+            warningBox.style.cssText = `
+                display: none; position: fixed; top: 20px; right: 20px; width: 320px;
+                z-index: 10000; font-family: sans-serif;
+            `;
+            document.body.appendChild(warningBox);
+        }
+
+        let contentHTML = "";
+        
+        if (customMessage) {
+             contentHTML = `
+                <div style="background:#1e293b; padding:20px; border-radius:8px; border-left: 5px solid #ef4444; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                    <h3 style="color:#ef4444; margin:0 0 10px 0; font-size:1.1rem;">⚠️ VIOLATION</h3>
+                    <p style="font-size:0.9rem; color:#cbd5e1; margin:0 0 15px 0;">${customMessage}</p>
+                    <button id="returnFSBtn" style="width:100%; padding:8px; cursor:pointer; background:#ef4444; color:white; border:none; border-radius:4px;">FIX NOW</button>
+                </div>
+            `;
+        } else if (riskScore > 50) {
+             contentHTML = `
+                <div style="background:#1e293b; padding:20px; border-radius:8px; border-left: 5px solid #f59e0b; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                    <h3 style="color:#f59e0b; margin:0 0 10px 0; font-size:1.1rem;">⚠️ RISK LEVEL: ${riskScore}%</h3>
+                    <p style="font-size:0.9rem; color:#cbd5e1; margin:0;">Suspicious activity detected.</p>
+                </div>
+            `;
+        }
+
+        if (contentHTML) {
+            warningBox.innerHTML = contentHTML;
+            warningBox.style.display = "block";
+            const btn = document.getElementById("returnFSBtn");
+            if (btn) btn.onclick = enterFullScreen;
+        } else if (riskScore < 20) {
+            warningBox.style.display = "none";
+        }
+    }
+
+    // --- SENSORS ---
+
+    document.addEventListener("fullscreenchange", () => {
+        if (!isMonitoring) return;
+        if (!document.fullscreenElement) {
+            logEvent("FULL_SCREEN_EXIT", "Exited full screen");
+            triggerWarning(null, true, "Full Screen Required.");
+        } else {
+            const box = document.getElementById("ps-warning-modal");
+            if(box) box.style.display = "none";
+        }
+    });
+
+    document.addEventListener("visibilitychange", () => {
+        if (!isMonitoring) return;
+        if (document.hidden) {
+            logEvent("TAB_SWITCH_OUT", "Switched tab");
+        }
+    });
+
+    window.addEventListener("blur", () => {
+        if (!isMonitoring) return;
+        logEvent("FOCUS_LOST", "User clicked outside browser");
+    });
+
+    document.addEventListener("paste", (e) => {
+        if (!isMonitoring) return;
+        let data = (e.clipboardData || window.clipboardData).getData('text');
+        
+        if (data.includes("[TRACKING_ID")) {
+            logEvent("HONEYPOT_TRIGGER", "Copied hidden question code");
+        }
+        logEvent("PASTE", `Pasted ${data.length} chars`, data.length);
+    });
+
+    document.addEventListener("keydown", (e) => {
+        if (!isMonitoring) return;
+        
+        // FIX: Ignore holding down a key (repeating)
+        if (e.repeat) return; 
+
+        const now = Date.now();
+        keyTimestamps.push(now);
+        keyTimestamps = keyTimestamps.filter(t => now - t < 60000);
+        
+        const recent = keyTimestamps.slice(-5);
+        if (recent.length === 5 && (recent[4] - recent[0] < 50)) {
+            logEvent("IMPOSSIBLE_TYPING", "Bot detected");
+            keyTimestamps = [];
+        }
+    });
+
+    function getWPM() { return Math.round((keyTimestamps.length / 5)); }
 
     function getDeviceInfo() {
         return {
@@ -23,132 +159,33 @@
         };
     }
 
-    if (startBtn) {
-        startBtn.addEventListener("click", () => {
-            const val = idInput.value.trim();
-            if (val.length < 3) {
-                alert("Please enter a valid Candidate ID.");
-                return;
-            }
-            activeCandidateId = val;
-            isMonitoring = true;
-            idInput.disabled = true;
-            startBtn.disabled = true;
-            startBtn.innerText = "EXAM IN PROGRESS";
-            
-            statusText.innerText = "✅ MONITORING ACTIVE";
-            statusText.style.color = "var(--neon-green)";
-            
-            // --- NEW: TRIGGER FULL SCREEN ---
-            const elem = document.documentElement;
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen().catch(err => {
-                    console.log("Full screen denied:", err.message);
-                });
-            }
-
-            // Disable Right Click
-            document.addEventListener("contextmenu", event => event.preventDefault());
-        });
-    }
-
-    // --- 2. VISUAL WARNING SYSTEM ---
-    function triggerWarning(riskScore, isViolation) {
-        if (!isMonitoring) return;
-        const body = document.body;
-        let warningBox = document.getElementById("ps-warning-modal");
-
-        if (!warningBox) {
-            warningBox = document.createElement("div");
-            warningBox.id = "ps-warning-modal";
-            // FUTURISTIC STYLE
-            warningBox.style.cssText = `
-                display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-                background: #000; padding: 20px 30px; 
-                border: 1px solid #ff2a2a; border-left: 5px solid #ff2a2a;
-                box-shadow: 0 0 20px rgba(255, 42, 42, 0.4); 
-                z-index: 9999; font-family: 'Share Tech Mono', monospace; color: #fff;
-                text-align: center;
-            `;
-            document.body.appendChild(warningBox);
-        }
-
-        if (isViolation || riskScore > 50) {
-            body.style.transition = "background-color 0.2s";
-            body.style.backgroundColor = "rgba(255, 0, 0, 0.1)"; 
-            setTimeout(() => body.style.backgroundColor = "", 500); 
-
-            warningBox.style.display = "block";
-            warningBox.innerHTML = `
-                <h3 style="margin:0; color:#ff2a2a;">⚠️ INTEGRITY ALERT</h3>
-                <p style="margin:5px 0;">Suspicious behavior detected. Risk: <b>${riskScore}%</b></p>
-                <small>RETURN TO FOCUS IMMEDIATELY</small>
-            `;
-        } else if (riskScore < 20) {
-            warningBox.style.display = "none";
-        }
-    }
-
-    // --- 3. SENSORS ---
-
-    // A. Tab Switch
-    document.addEventListener("visibilitychange", () => {
-        if (!isMonitoring) return;
-        if (document.hidden) logEvent("TAB_SWITCH_OUT", "User left window");
-        else logEvent("TAB_SWITCH_IN", "User returned");
-    });
-
-    // B. Copy/Paste
-    document.addEventListener("paste", (e) => {
-        if (!isMonitoring) return;
-        let pasteData = (e.clipboardData || window.clipboardData).getData('text');
-        logEvent("PASTE", `Pasted ${pasteData.length} chars`, pasteData.length);
-    });
-
-    // C. Right Click Blocker
-    document.addEventListener("contextmenu", (e) => {
-        if (!isMonitoring) return;
-        e.preventDefault(); 
-        logEvent("RIGHT_CLICK_ATTEMPT", "User tried to right-click");
-    });
-
-    // D. WPM & Bot Detection
-    document.addEventListener("keydown", (e) => {
-        if (!isMonitoring) return;
-        const now = Date.now();
-        keyTimestamps.push(now);
-        keyTimestamps = keyTimestamps.filter(t => now - t < 60000);
-        
-        const recentKeys = keyTimestamps.slice(-5);
-        if (recentKeys.length === 5 && (recentKeys[4] - recentKeys[0] < 50)) {
-            logEvent("IMPOSSIBLE_TYPING", "Bot speed detected");
-            keyTimestamps = []; 
-        }
-    });
-
-    function getWPM() { return Math.round((keyTimestamps.length / 5)); }
-
     function logEvent(type, message, length = 0) {
         if (!isMonitoring) return;
         eventLog.push({ type, message, length, timestamp: Date.now() });
     }
 
-    // --- 4. SYNC LOOP ---
+    // --- LOOP ---
     setInterval(() => {
         if (!isMonitoring || !activeCandidateId) return;
 
-        // Offline Support
-        const offlineData = JSON.parse(localStorage.getItem("offlineEvents") || "[]");
-        const allEvents = [...offlineData, ...eventLog];
-        
-        // Don't send empty packets if WPM is 0
-        if (allEvents.length === 0 && getWPM() === 0) return; 
+        const isFullScreen = !!document.fullscreenElement;
+        const isFocused = document.hasFocus();
+
+        if (!isFullScreen) {
+            triggerWarning(null, true, "Full Screen Required.");
+        } else if (!isFocused) {
+            triggerWarning(null, true, "Click inside the exam window!");
+        }
 
         const payload = {
             candidateId: activeCandidateId,
-            events: allEvents,
+            events: eventLog,
             metrics: { wpm: getWPM() },
-            deviceInfo: getDeviceInfo()
+            deviceInfo: getDeviceInfo(),
+            status: {
+                isFullScreen: isFullScreen,
+                isFocused: isFocused
+            }
         };
 
         fetch('http://localhost:3000/api/track', {
@@ -158,16 +195,12 @@
         })
         .then(res => res.json())
         .then(data => {
-            triggerWarning(data.riskScore, data.violation);
-            eventLog = [];
-            localStorage.removeItem("offlineEvents");
-        })
-        .catch(err => {
-            console.warn("Offline! Saving events locally...");
-            const existing = JSON.parse(localStorage.getItem("offlineEvents") || "[]");
-            localStorage.setItem("offlineEvents", JSON.stringify([...existing, ...eventLog]));
+            if (isFullScreen && isFocused) {
+                triggerWarning(data.riskScore, data.violation);
+            }
             eventLog = []; 
-        });
+        })
+        .catch(err => console.log("Offline"));
 
     }, SEND_INTERVAL);
 
