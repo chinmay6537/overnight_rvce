@@ -20,6 +20,9 @@ Requires high bandwidth, excluding students with poor internet connections.
 Explanation:
 https://www.youtube.com/watch?v=DGWupjbOxfg
 
+PDF/PPT:
+https://drive.google.com/file/d/16z3H8QLCtSx3DB5VZa19uETmWrvrmgL7/view?usp=sharing
+
 The Solution:
 
 ProctorSense shifts from watching the student to analyzing the interaction. It uses a lightweight JavaScript SDK to monitor telemetry metadata—keystroke dynamics, mouse patterns, navigation events, and focus states. This data feeds into a real-time risk engine that calculates an "Integrity Risk Score," flagging suspicious behavior instantly while respecting user privacy.
