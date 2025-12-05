@@ -7,8 +7,9 @@
     let isMonitoring = false; 
     let activeCandidateId = null;
     
+    // REMOVED: audioContext and microphone variables
+
     const SEND_INTERVAL = 3000; 
-    const INTERNAL_SIG = ":::INTERNAL_SAFE:::"; // The secret "watermark"
 
     const startBtn = document.getElementById("startMonitoringBtn");
     
@@ -21,9 +22,11 @@
         }
     }
 
+    // REMOVED: initAudio function entirely
+
     if (startBtn) {
         startBtn.addEventListener("click", () => {
-            // GET ID FROM HIDDEN INPUT
+            // GET ID FROM HIDDEN INPUT (Auto-filled by previous script)
             const idInput = document.getElementById("candidateId");
             const val = idInput.value || localStorage.getItem("proctor_candidate_id");
             
@@ -36,7 +39,7 @@
             activeCandidateId = val;
             isMonitoring = true;
             
-            // Update UI
+            // Update UI to show active state
             startBtn.disabled = true;
             startBtn.innerText = "MONITORING ACTIVE";
             startBtn.style.borderColor = "#10b981";
@@ -49,11 +52,13 @@
             }
 
             enterFullScreen();
+            // REMOVED: initAudio() call
+            
             document.addEventListener("contextmenu", event => event.preventDefault());
         });
     }
 
-    // --- WARNING SYSTEM (UNCHANGED) ---
+    // --- WARNING SYSTEM ---
     function triggerWarning(riskScore, isViolation, customMessage = null) {
         if (!isMonitoring) return;
 
@@ -124,72 +129,15 @@
         logEvent("FOCUS_LOST", "User clicked outside browser");
     });
 
-    // --- NEW: SMART COPY/PASTE HANDLERS ---
-
-    // 1. Intercept COPY to add Watermark
-    document.addEventListener("copy", (e) => {
-        if (!isMonitoring) return;
-        
-        // Determine what text was selected
-        const target = e.target;
-        let selectedText = "";
-
-        // Get selection from Textarea/Input OR standard text
-        if (target.tagName === "TEXTAREA" || target.tagName === "INPUT") {
-            selectedText = target.value.substring(target.selectionStart, target.selectionEnd);
-        } else {
-            selectedText = document.getSelection().toString();
-        }
-
-        if (selectedText) {
-            // Append our invisible secret signature
-            e.clipboardData.setData('text/plain', selectedText + INTERNAL_SIG);
-            e.preventDefault(); // Prevent default to ensure our modified data is used
-        }
-    });
-
-    // 2. Intercept PASTE to check for Watermark
     document.addEventListener("paste", (e) => {
         if (!isMonitoring) return;
-        
         let data = (e.clipboardData || window.clipboardData).getData('text');
-        
-        // CHECK 1: Is this an internal copy?
-        if (data.includes(INTERNAL_SIG)) {
-            // YES: It has our watermark. It is safe.
-            e.preventDefault(); // Prevent default paste (which would include the watermark)
-            
-            // Strip the watermark
-            const cleanData = data.replace(INTERNAL_SIG, "");
-            
-            // Manually insert clean text into the cursor position
-            const target = e.target;
-            if (target.tagName === "TEXTAREA" || target.tagName === "INPUT") {
-                const start = target.selectionStart;
-                const end = target.selectionEnd;
-                target.value = target.value.substring(0, start) + cleanData + target.value.substring(end);
-                // Restore cursor position
-                target.selectionStart = target.selectionEnd = start + cleanData.length;
-            }
-            
-            // Log it as safe (or don't log at all)
-            console.log("Internal paste allowed."); 
-            // We do NOT call logEvent here, so it won't show up as a violation.
-            return;
-        }
-
-        // CHECK 2: If we are here, it is an EXTERNAL paste (No watermark)
-        
-        // Honeypot Check (Hidden question text)
         if (data.includes("[TRACKING_ID")) {
             logEvent("HONEYPOT_TRIGGER", "Copied hidden question code");
         }
-        
-        // General External Paste Flag
-        logEvent("EXTERNAL_PASTE", `Pasted ${data.length} chars from external source`, data.length);
+        logEvent("PASTE", `Pasted ${data.length} chars`, data.length);
     });
 
-    // --- TYPING BIOMETRICS ---
     document.addEventListener("keydown", (e) => {
         if (!isMonitoring) return;
         if (e.repeat) return; 
