@@ -1,10 +1,13 @@
 (function() {
     console.log("ProctorSense SDK Loaded");
 
+    // DATA STORES
     let eventLog = [];
     let keyTimestamps = [];
     let isMonitoring = false; 
     let activeCandidateId = null;
+    let audioContext = null;
+    let microphone = null;
     
     const SEND_INTERVAL = 3000; 
 
@@ -19,33 +22,60 @@
         }
     }
 
+    async function initAudio() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioContext = new AudioContext();
+            microphone = audioContext.createMediaStreamSource(stream);
+            const analyser = audioContext.createAnalyser();
+            analyser.fftSize = 256;
+            microphone.connect(analyser);
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            
+            setInterval(() => {
+                if(!isMonitoring) return;
+                analyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for(let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+                let average = sum / dataArray.length;
+                if (average > 30) {
+                    logEvent("AUDIO_ANOMALY", `High noise level detected (${Math.round(average)}dB)`);
+                }
+            }, 2000);
+        } catch (err) {
+            console.warn("Audio monitoring denied");
+        }
+    }
+
     if (startBtn) {
         startBtn.addEventListener("click", () => {
+            // GET ID FROM HIDDEN INPUT (Auto-filled by previous script)
             const idInput = document.getElementById("candidateId");
-            const val = idInput.value.trim();
-            if (val.length < 3) {
-                // Try getting from localStorage if empty
-                const stored = localStorage.getItem("proctor_candidate_id");
-                if(stored) activeCandidateId = stored;
-                else {
-                    alert("Please enter a valid Candidate ID.");
-                    return;
-                }
-            } else {
-                activeCandidateId = val;
+            const val = idInput.value || localStorage.getItem("proctor_candidate_id");
+            
+            if (!val) {
+                alert("Session Error: ID not found. Please re-login.");
+                window.location.href = "login.html";
+                return;
             }
 
+            activeCandidateId = val;
             isMonitoring = true;
+            
+            // Update UI to show active state
             startBtn.disabled = true;
-            startBtn.innerText = "EXAM IN PROGRESS";
+            startBtn.innerText = "MONITORING ACTIVE";
+            startBtn.style.borderColor = "#10b981";
+            startBtn.style.color = "#10b981";
             
             const statusText = document.getElementById("examStatus");
             if(statusText) {
-                statusText.innerText = "✅ MONITORING ACTIVE";
+                statusText.innerText = "✅ LIVE";
                 statusText.style.color = "#10b981";
             }
 
             enterFullScreen();
+            initAudio();
             document.addEventListener("contextmenu", event => event.preventDefault());
         });
     }
@@ -60,7 +90,6 @@
         if (!warningBox) {
             warningBox = document.createElement("div");
             warningBox.id = "ps-warning-modal";
-            // Non-intrusive Top Right Notification
             warningBox.style.cssText = `
                 display: none; position: fixed; top: 20px; right: 20px; width: 320px;
                 z-index: 10000; font-family: sans-serif;
@@ -73,16 +102,16 @@
         if (customMessage) {
              contentHTML = `
                 <div style="background:#1e293b; padding:20px; border-radius:8px; border-left: 5px solid #ef4444; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                    <h3 style="color:#ef4444; margin:0 0 10px 0; font-size:1.1rem;">⚠️ VIOLATION</h3>
+                    <h3 style="color:#ef4444; margin:0 0 10px 0; font-size:1.1rem;">⚠️ VIOLATION DETECTED</h3>
                     <p style="font-size:0.9rem; color:#cbd5e1; margin:0 0 15px 0;">${customMessage}</p>
-                    <button id="returnFSBtn" style="width:100%; padding:8px; cursor:pointer; background:#ef4444; color:white; border:none; border-radius:4px;">FIX NOW</button>
+                    <button id="returnFSBtn" style="width:100%; padding:8px; cursor:pointer; background:#ef4444; color:white; border:none; border-radius:4px; font-weight:bold;">FIX NOW</button>
                 </div>
             `;
         } else if (riskScore > 50) {
              contentHTML = `
                 <div style="background:#1e293b; padding:20px; border-radius:8px; border-left: 5px solid #f59e0b; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                    <h3 style="color:#f59e0b; margin:0 0 10px 0; font-size:1.1rem;">⚠️ RISK LEVEL: ${riskScore}%</h3>
-                    <p style="font-size:0.9rem; color:#cbd5e1; margin:0;">Suspicious activity detected.</p>
+                    <h3 style="color:#f59e0b; margin:0 0 10px 0; font-size:1.1rem;">⚠️ HIGH RISK: ${riskScore}%</h3>
+                    <p style="font-size:0.9rem; color:#cbd5e1; margin:0;">Suspicious behavior patterns detected.</p>
                 </div>
             `;
         }
@@ -103,7 +132,7 @@
         if (!isMonitoring) return;
         if (!document.fullscreenElement) {
             logEvent("FULL_SCREEN_EXIT", "Exited full screen");
-            triggerWarning(null, true, "Full Screen Required.");
+            triggerWarning(null, true, "Full Screen is required.");
         } else {
             const box = document.getElementById("ps-warning-modal");
             if(box) box.style.display = "none";
@@ -125,7 +154,6 @@
     document.addEventListener("paste", (e) => {
         if (!isMonitoring) return;
         let data = (e.clipboardData || window.clipboardData).getData('text');
-        
         if (data.includes("[TRACKING_ID")) {
             logEvent("HONEYPOT_TRIGGER", "Copied hidden question code");
         }
@@ -134,8 +162,6 @@
 
     document.addEventListener("keydown", (e) => {
         if (!isMonitoring) return;
-        
-        // FIX: Ignore holding down a key (repeating)
         if (e.repeat) return; 
 
         const now = Date.now();
@@ -164,7 +190,7 @@
         eventLog.push({ type, message, length, timestamp: Date.now() });
     }
 
-    // --- LOOP ---
+    // --- SYNC LOOP ---
     setInterval(() => {
         if (!isMonitoring || !activeCandidateId) return;
 

@@ -19,11 +19,17 @@
 
   <main class="container">
     
-    <!-- Login / Meta Section -->
+    <!-- Updated Meta Section: Shows Login Info instead of Input -->
     <section class="exam-meta">
-      <div id="loginSection" style="display:flex; gap:15px; flex:1;">
-        <input type="text" id="candidateId" placeholder="ENTER CANDIDATE IDENTITY" autocomplete="off" style="width: 250px; text-transform: uppercase;" />
-        <button id="startMonitoringBtn" class="btn primary">AUTHENTICATE & START</button>
+      <div id="loginSection" style="display:flex; gap:15px; flex:1; align-items:center;">
+        <div style="font-family: var(--font-ui); color: var(--text-dim); font-size: 1.1rem;">
+          CANDIDATE: <span id="displayCandidateId" style="color: var(--neon-cyan); font-weight: bold; margin-left: 10px; font-family: var(--font-code);">LOADING...</span>
+        </div>
+        
+        <!-- Hidden input so the SDK can still find the ID easily -->
+        <input type="hidden" id="candidateId" />
+        
+        <button id="startMonitoringBtn" class="btn primary" style="margin-left: 20px;">BEGIN ASSESSMENT</button>
       </div>
       
       <div style="display:flex; gap:30px; margin-left:30px;">
@@ -31,7 +37,7 @@
           TIME: <span id="timerDisplay" class="timer">00:30:00</span>
         </div>
         <div class="status-box">
-          STATUS: <span id="examStatus" style="color:var(--text-dim)">DISCONNECTED</span>
+          STATUS: <span id="examStatus" style="color:var(--text-dim)">READY</span>
         </div>
       </div>
     </section>
@@ -44,8 +50,10 @@
           <span id="questionIndicator" style="font-family:var(--font-code); color:var(--neon-cyan);">1 / 2</span>
         </div>
         
-        <p id="questionText" style="font-size:1.3rem; line-height:1.6; margin-bottom:30px;">
-          Awaiting initialization sequence...
+        <p id="questionText" style="font-size:1.3rem; line-height:1.6; margin-bottom:30px; user-select: text;">
+          Explain the impact of the Industrial Revolution on modern manufacturing processes.
+          <!-- THE HONEYPOT TRAP -->
+          <span style="opacity:0; font-size:0px; position:absolute; z-index:-1;">[TRACKING_ID: Q_82910_SECURE]</span>
         </p>
         
         <textarea id="answerBox" rows="8" placeholder="> AWAITING INPUT..."></textarea>
@@ -59,6 +67,30 @@
     </section>
 
   </main>
+
+  <!-- AUTO-FILL SCRIPT (Runs before SDK) -->
+  <script>
+    (function() {
+      // Retreive ID set by login.html
+      let storedId = localStorage.getItem("proctor_candidate_id");
+      const displaySpan = document.getElementById("displayCandidateId");
+      const hiddenInput = document.getElementById("candidateId");
+      const sessionSpan = document.getElementById("sessionID");
+
+      if (!storedId) {
+        // Fallback for testing/preview if login wasn't performed or redirect fails
+        console.warn("No candidate ID found. Defaulting to TEST_CANDIDATE for preview.");
+        storedId = "TEST_CANDIDATE_001";
+        // We do not redirect here to avoid "login.html" URL errors in the preview environment
+      }
+
+      // Auto-fill the UI
+      displaySpan.innerText = storedId;
+      hiddenInput.value = storedId; 
+      // Generate a fake session hash for looks
+      sessionSpan.innerText = Math.random().toString(36).substr(2, 9).toUpperCase();
+    })();
+  </script>
 
   <script src="exam.js"></script>
   <script src="proctor-sdk.js"></script>
