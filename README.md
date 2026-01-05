@@ -9,6 +9,7 @@ Traditional online proctoring is a flawed security relic. It equates **security 
 * **🚫 Privacy Nightmare:** It records students' private homes, violating critical regulations like **GDPR/FERPA** and causing extreme anxiety for honest users.
 * **🐢 Legacy Tech:** High bandwidth requirements **exclude** students with poor internet connections.
 * **🤖 Cheaters Win:** These systems are easily bypassed and **fail to detect modern cheating** methods, such as students seamlessly copy-pasting from Generative AI tools (like ChatGPT).<br>
+<br>
 [VERCEL APP](https://final-sandy-ten-54.vercel.app/)<br><br>
 [DEMO OF THE PRODUCT](https://youtu.be/xQcMhTcj7Kw) <br> <br>
 [Explanation of the problem](https://www.youtube.com/watch?v=DGWupjbOxfg) <br> <br>
